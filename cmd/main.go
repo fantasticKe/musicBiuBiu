@@ -20,10 +20,11 @@ var (
 func initRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/biubiu", apis.Biubiu)
-
+	router.GET("/spider/:songId", apis.Spider)
 	return router
 }
 func main() {
+	//ntesMusic.GetAllComments("135050")
 	router := initRouter()
 	router.Run(":8080")
 }
