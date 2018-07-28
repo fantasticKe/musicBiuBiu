@@ -13,9 +13,11 @@ var (
 	SongIdRex   = `<li><a href="/song\?id=(\d*?)">.*?</a></li>`
 )
 
+/**
+根据歌单Id抓取歌名及歌的Id
+*/
 func SongId(listId string) (songMap map[string]string, err error) {
 	var songs = make(map[string]string)
-
 	client := &http.Client{}
 	request, _ := http.NewRequest(http.MethodGet, "https://music.163.com/discover/toplist?id="+listId, nil)
 	request.Header.Set("Referer", "http://music.163.com")

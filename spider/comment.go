@@ -67,6 +67,7 @@ func (com *NteComments) GetAllComments(songs map[string]string) {
 				}
 				for _, c := range commentsRep.Comments {
 					comment := orm.Comment{
+						Id:         c.CommentId,
 						UserId:     c.User.UserId,
 						MusicName:  songName,
 						MusicId:    songId,
@@ -86,11 +87,16 @@ func (com *NteComments) GetAllComments(songs map[string]string) {
 					log.Println("获取这首歌所有评论一共花费时间:", time.Now().Sub(startTime))
 					break
 				}
+				if commentsRep.Total == 0 || commentsRep.Code != 200 {
+					log.Println("未能获取到歌曲评论")
+					break
+				}
 				offset += 20
 				time.Sleep(20 * time.Second)
 			}
 		}(songName, songId)
 	}
+	log.Println("抓取完该歌单的歌曲")
 	wg.Wait()
 }
 

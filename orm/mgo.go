@@ -2,19 +2,18 @@ package orm
 
 import (
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type Comment struct {
-	Id         bson.ObjectId `bson:"_id"`
-	MusicName  string        `bson:"musicName"`
-	MusicId    string        `bson:"musicId"`
-	UserId     int64         `bson:"userId"`
-	NickName   string        `bson:"nickName"`
-	AvatarUrl  string        `bson:"avatarUrl"`
-	Content    string        `bson:"content"`
-	LikesCount int           `bson:"likesCount"`
-	Time       int64         `bson:"time"`
+	Id         int64  `bson:"_id"`
+	MusicName  string `bson:"musicName"`
+	MusicId    string `bson:"musicId"`
+	UserId     int64  `bson:"userId"`
+	NickName   string `bson:"nickName"`
+	AvatarUrl  string `bson:"avatarUrl"`
+	Content    string `bson:"content"`
+	LikesCount int    `bson:"likesCount"`
+	Time       int64  `bson:"time"`
 }
 
 const URL = "localhost:27018"
@@ -52,13 +51,12 @@ func WitchCollection(col string, s func(session *mgo.Collection) error) error {
 /**
 存入评论
 */
-func AddComment(com Comment) string {
-	com.Id = bson.NewObjectId()
+func AddComment(com Comment) int64 {
 	query := func(c *mgo.Collection) error {
 		return c.Insert(com)
 	}
 	if err := WitchCollection(collection, query); err != nil {
-		return "false"
+		return 0
 	}
-	return com.Id.Hex()
+	return com.Id
 }
