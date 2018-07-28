@@ -44,13 +44,13 @@ type BeReplied struct {
 }
 
 type CommentsRep struct {
-	IsMusician  bool       `json:"isMusician"`
-	UserId      int        `json:"userId"`
-	TopComments []string   `json:"topComments";gorm:"-"`
-	MoreHot     bool       `json:"moreHot"`
-	HotComments []*Comment `json:"hotComments"`
-	Code        int        `json:"code"`
-	Comments    []*Comment `json:"comments"`
-	Total       int        `json:"total"`
-	More        bool       `json:"more"`
+	IsMusician  bool          `json:"isMusician"`
+	UserId      int           `json:"userId"`
+	TopComments []interface{} `json:"topComments"`
+	MoreHot     bool          `json:"moreHot"`
+	HotComments []*Comment    `json:"hotComments"`
+	Code        int           `json:"code"`
+	Comments    []*Comment    `json:"comments"`
+	Total       int           `json:"total"`
+	More        bool          `json:"more"`
 }

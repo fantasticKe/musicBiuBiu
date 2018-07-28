@@ -10,8 +10,13 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
+
+type NteComments struct {
+	Wc chan orm.Comment
+}
 
 /**
 	获取歌曲评论
@@ -38,46 +43,55 @@ func GetComments(id string, offset, limit int) (commentReps string, err error) {
 	return commentReps, err
 
 }
-func GetAllComments(songId string) {
-	offset := 0
-	fmt.Printf("开始获取歌曲id:%s的所有评论\n", songId)
-	time.Sleep(1 * time.Millisecond)
-	i := 0
-	startTime := time.Now()
-	var data string
-	var err error
-	for {
-		data, err = GetComments(songId, offset, offset+40)
-		fmt.Println(data)
-		var commentsRep *CommentsRep
-		if err != nil {
-			log.Println(err)
-		}
-		if err1 := json.Unmarshal([]byte(data), &commentsRep); err1 != nil {
-			panic(err1)
-		}
-		for _, c := range commentsRep.Comments {
-			comment := orm.Comment{
-				UserId:     c.User.UserId,
-				NickName:   c.User.Nickname,
-				AvatarUrl:  c.User.AvatarUrl,
-				Content:    c.Content,
-				LikesCount: c.LikedCount,
-				Time:       c.Time,
+func (com *NteComments) GetAllComments(songs map[string]string) {
+	var wg sync.WaitGroup
+	for songName, songId := range songs {
+		wg.Add(1)
+		go func(songName, songId string) {
+			defer wg.Done()
+			offset := 0
+			fmt.Printf("开始获取歌曲:《%s》的所有评论\n", songName)
+			time.Sleep(1 * time.Millisecond)
+			i := 0
+			startTime := time.Now()
+			var data string
+			var err error
+			for {
+				data, err = GetComments(songId, offset, offset+40)
+				var commentsRep *CommentsRep
+				if err != nil {
+					log.Println(err)
+				}
+				if err1 := json.Unmarshal([]byte(data), &commentsRep); err1 != nil {
+					panic(err1)
+				}
+				for _, c := range commentsRep.Comments {
+					comment := orm.Comment{
+						UserId:     c.User.UserId,
+						MusicName:  songName,
+						MusicId:    songId,
+						NickName:   c.User.Nickname,
+						AvatarUrl:  c.User.AvatarUrl,
+						Content:    c.Content,
+						LikesCount: c.LikedCount,
+						Time:       c.Time,
+					}
+					com.Wc <- comment
+				}
+				i++
+				if offset > int(commentsRep.Total) {
+					log.Printf("这首歌一共请求%d次获取所有评论\n", i)
+					log.Printf("offset为%d \n", offset)
+					fmt.Printf("停止获取歌曲:《%s》 的所有评论\n", songName)
+					log.Println("获取这首歌所有评论一共花费时间:", time.Now().Sub(startTime))
+					break
+				}
+				offset += 20
+				time.Sleep(20 * time.Second)
 			}
-			orm.AddComment(comment)
-		}
-
-		i++
-		if offset > int(commentsRep.Total) {
-			log.Printf("这首歌一共请求%d次获取所有评论\n", i)
-			log.Printf("offset为%d \n", offset)
-			fmt.Printf("停止获取歌曲id:%s的所有评论\n", songId)
-			log.Println("获取这首歌所有评论一共花费时间:", time.Now().Sub(startTime))
-			break
-		}
-		offset += 20
+		}(songName, songId)
 	}
+	wg.Wait()
 }
 
 /**
@@ -89,7 +103,7 @@ func Comments(params string, encSecKey string, id string) (commentRep string, er
 	form.Set("params", params)
 	form.Set("encSecKey", encSecKey)
 	body := strings.NewReader(form.Encode())
-	request, _ := http.NewRequest("POST", "http://music.163.com/weapi/v1/resource/comments/R_SO_4_"+id+"?csrf_token=", body)
+	request, _ := http.NewRequest(http.MethodPost, "http://music.163.com/weapi/v1/resource/comments/R_SO_4_"+id+"?csrf_token=", body)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Referer", "http://music.163.com")
 	request.Header.Set("Content-Length", (string)(body.Len()))
@@ -104,11 +118,5 @@ func Comments(params string, encSecKey string, id string) (commentRep string, er
 	}
 	defer response.Body.Close()
 	resBody, _ := ioutil.ReadAll(response.Body)
-	//fmt.Println(string(resBody))
-	/*err = json.Unmarshal(resBody, &commentRep)
-	if err != nil {
-		fmt.Println(err)
-		return commentRep, err
-	}*/
 	return string(resBody), nil
 }
