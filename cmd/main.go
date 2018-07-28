@@ -24,7 +24,7 @@ func initRouter() *gin.Engine {
 	return router
 }
 func main() {
-	//ntesMusic.GetAllComments("135050")
+
 	router := initRouter()
 	router.Run(":8080")
 }

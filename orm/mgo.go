@@ -7,6 +7,8 @@ import (
 
 type Comment struct {
 	Id         bson.ObjectId `bson:"_id"`
+	MusicName  string        `bson:"musicName"`
+	MusicId    string        `bson:"musicId"`
 	UserId     int64         `bson:"userId"`
 	NickName   string        `bson:"nickName"`
 	AvatarUrl  string        `bson:"avatarUrl"`
@@ -15,7 +17,7 @@ type Comment struct {
 	Time       int64         `bson:"time"`
 }
 
-const URL = "localhost:27017"
+const URL = "localhost:27018"
 
 var (
 	mgoSession *mgo.Session
@@ -47,6 +49,9 @@ func WitchCollection(col string, s func(session *mgo.Collection) error) error {
 	return s(c)
 }
 
+/**
+存入评论
+*/
 func AddComment(com Comment) string {
 	com.Id = bson.NewObjectId()
 	query := func(c *mgo.Collection) error {

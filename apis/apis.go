@@ -1,9 +1,12 @@
 package apis
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"musicBiuBiu/orm"
 	"musicBiuBiu/spider"
 	"net/http"
+	"sync"
 )
 
 func Biubiu(c *gin.Context) {
@@ -12,7 +15,35 @@ func Biubiu(c *gin.Context) {
 }
 
 func Spider(c *gin.Context) {
-	songId := c.Param("songId")
-	ntesMusic.GetAllComments(songId)
-	c.String(http.StatusOK, songId)
+	listId := c.Param("songId")
+	SpiderComments("3778678")
+	c.String(http.StatusOK, listId)
+}
+
+func SpiderComments(songId string) {
+	var wg sync.WaitGroup
+
+	nteComments := ntesMusic.NteComments{
+		Wc: make(chan orm.Comment, 100),
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if hotMusic, err := ntesMusic.SongId(songId); err == nil {
+			fmt.Println(hotMusic)
+			nteComments.GetAllComments(hotMusic)
+		}
+	}()
+
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for com := range nteComments.Wc {
+				id := orm.AddComment(com)
+				fmt.Println(id)
+			}
+		}()
+	}
+	wg.Wait()
 }
