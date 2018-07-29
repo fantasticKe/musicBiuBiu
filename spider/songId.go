@@ -1,8 +1,8 @@
 package ntesMusic
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -28,7 +28,7 @@ func SongId(listId string) (songMap map[string]string, err error) {
 	response, reqErr := client.Do(request)
 	// 错误处理
 	if reqErr != nil {
-		fmt.Println("Fatal error ", reqErr.Error())
+		log.Println("Fatal error ", reqErr.Error())
 		return songs, reqErr
 	}
 	defer response.Body.Close()

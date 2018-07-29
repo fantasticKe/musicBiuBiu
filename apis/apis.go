@@ -16,10 +16,23 @@ func Biubiu(c *gin.Context) {
 
 func Spider(c *gin.Context) {
 	listId := c.Param("songId")
-	SpiderComments("3778678")
+	SpiderComments(listId)
 	c.String(http.StatusOK, listId)
 }
 
+func GetCommentsByMusicName(c *gin.Context) {
+	musicName := c.Param("musicName")
+	var comments []orm.Comment
+	var err error
+	if comments, err = orm.GetCommentsByMusicName(musicName); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+	}
+	c.JSON(http.StatusOK, comments)
+}
+
+/**
+根据歌单id抓取该歌单所有歌曲的评论
+*/
 func SpiderComments(songId string) {
 	var wg sync.WaitGroup
 

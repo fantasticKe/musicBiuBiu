@@ -2,6 +2,7 @@ package orm
 
 import (
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Comment struct {
@@ -59,4 +60,21 @@ func AddComment(com Comment) int64 {
 		return 0
 	}
 	return com.Id
+}
+
+/**
+根据歌曲名称获取评论
+*/
+func GetCommentsByMusicName(musicName string) ([]Comment, error) {
+	var comments []Comment
+	session := GetSession()
+	defer session.Close()
+	con := session.DB(dataBase).C(collection)
+
+	if err := con.Find(bson.M{"musicName": bson.M{"$regex": musicName, "$options": "$i"}}).All(&comments); err != nil {
+		if err.Error() != mgo.ErrNotFound.Error() {
+			return comments, err
+		}
+	}
+	return comments, nil
 }

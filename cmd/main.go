@@ -21,6 +21,7 @@ func initRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/biubiu", apis.Biubiu)
 	router.GET("/spider/:songId", apis.Spider)
+	router.GET("/getComment/:musicName", apis.GetCommentsByMusicName)
 	return router
 }
 func main() {

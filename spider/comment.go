@@ -50,7 +50,7 @@ func (com *NteComments) GetAllComments(songs map[string]string) {
 		go func(songName, songId string) {
 			defer wg.Done()
 			offset := 0
-			fmt.Printf("开始获取歌曲:《%s》的所有评论\n", songName)
+			log.Printf("开始获取歌曲:《%s》的所有评论\n", songName)
 			time.Sleep(1 * time.Millisecond)
 			i := 0
 			startTime := time.Now()
@@ -83,7 +83,7 @@ func (com *NteComments) GetAllComments(songs map[string]string) {
 				if offset > int(commentsRep.Total) {
 					log.Printf("这首歌一共请求%d次获取所有评论\n", i)
 					log.Printf("offset为%d \n", offset)
-					fmt.Printf("停止获取歌曲:《%s》 的所有评论\n", songName)
+					log.Printf("停止获取歌曲:《%s》 的所有评论\n", songName)
 					log.Println("获取这首歌所有评论一共花费时间:", time.Now().Sub(startTime))
 					break
 				}
