@@ -44,7 +44,7 @@ func SpiderComments(songId string) {
 		defer wg.Done()
 		if hotMusic, err := ntesMusic.SongId(songId); err == nil {
 			fmt.Println(hotMusic)
-			nteComments.GetAllComments(hotMusic)
+			nteComments.GetListComments(hotMusic)
 		}
 	}()
 

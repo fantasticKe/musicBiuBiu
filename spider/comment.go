@@ -43,61 +43,70 @@ func GetComments(id string, offset, limit int) (commentReps string, err error) {
 	return commentReps, err
 
 }
-func (com *NteComments) GetAllComments(songs map[string]string) {
+
+/**
+获取歌单的所有评论
+*/
+func (com *NteComments) GetListComments(songs map[string]string) {
 	var wg sync.WaitGroup
 	for songName, songId := range songs {
 		wg.Add(1)
-		go func(songName, songId string) {
-			defer wg.Done()
-			offset := 0
-			log.Printf("开始获取歌曲:《%s》的所有评论\n", songName)
-			time.Sleep(1 * time.Millisecond)
-			i := 0
-			startTime := time.Now()
-			var data string
-			var err error
-			for {
-				data, err = GetComments(songId, offset, offset+40)
-				var commentsRep *CommentsRep
-				if err != nil {
-					log.Println(err)
-				}
-				if err1 := json.Unmarshal([]byte(data), &commentsRep); err1 != nil {
-					panic(err1)
-				}
-				for _, c := range commentsRep.Comments {
-					comment := orm.Comment{
-						Id:         c.CommentId,
-						UserId:     c.User.UserId,
-						MusicName:  songName,
-						MusicId:    songId,
-						NickName:   c.User.Nickname,
-						AvatarUrl:  c.User.AvatarUrl,
-						Content:    c.Content,
-						LikesCount: c.LikedCount,
-						Time:       c.Time,
-					}
-					com.Wc <- comment
-				}
-				i++
-				if offset > int(commentsRep.Total) {
-					log.Printf("这首歌一共请求%d次获取所有评论\n", i)
-					log.Printf("offset为%d \n", offset)
-					log.Printf("停止获取歌曲:《%s》 的所有评论\n", songName)
-					log.Println("获取这首歌所有评论一共花费时间:", time.Now().Sub(startTime))
-					break
-				}
-				if commentsRep.Total == 0 || commentsRep.Code != 200 {
-					log.Println("未能获取到歌曲评论")
-					break
-				}
-				offset += 20
-				time.Sleep(20 * time.Second)
-			}
-		}(songName, songId)
+		go GetAllComments(songName, songId, com, wg)
 	}
 	log.Println("抓取完该歌单的歌曲")
 	wg.Wait()
+}
+
+/**
+获取歌曲的所有评论
+*/
+func GetAllComments(songName, songId string, com *NteComments, wg sync.WaitGroup) {
+	defer wg.Done()
+	offset := 0
+	log.Printf("开始获取歌曲:《%s》的所有评论\n", songName)
+	time.Sleep(1 * time.Millisecond)
+	i := 0
+	startTime := time.Now()
+	var data string
+	var err error
+	for {
+		data, err = GetComments(songId, offset, offset+40)
+		var commentsRep *CommentsRep
+		if err != nil {
+			log.Println(err)
+		}
+		if err1 := json.Unmarshal([]byte(data), &commentsRep); err1 != nil {
+			panic(err1)
+		}
+		for _, c := range commentsRep.Comments {
+			comment := orm.Comment{
+				Id:         c.CommentId,
+				UserId:     c.User.UserId,
+				MusicName:  songName,
+				MusicId:    songId,
+				NickName:   c.User.Nickname,
+				AvatarUrl:  c.User.AvatarUrl,
+				Content:    c.Content,
+				LikesCount: c.LikedCount,
+				Time:       c.Time,
+			}
+			com.Wc <- comment
+		}
+		i++
+		if offset > int(commentsRep.Total) {
+			log.Printf("这首歌一共请求%d次获取所有评论\n", i)
+			log.Printf("offset为%d \n", offset)
+			log.Printf("停止获取歌曲:《%s》 的所有评论\n", songName)
+			log.Println("获取这首歌所有评论一共花费时间:", time.Now().Sub(startTime))
+			break
+		}
+		if commentsRep.Total == 0 || commentsRep.Code != 200 {
+			log.Println("未能获取到歌曲评论")
+			break
+		}
+		offset += 20
+		time.Sleep(20 * time.Second)
+	}
 }
 
 /**
